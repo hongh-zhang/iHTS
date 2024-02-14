@@ -9,6 +9,7 @@ from typing import List, Callable
 
 import rdkit
 from rdkit.Chem import AllChem
+from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
 
 from joblib import Parallel, delayed
 from joblib import wrap_non_picklable_objects
@@ -58,6 +59,32 @@ def get_fingerprint_ls(mol_ls: List[rdkit.Chem.rdchem.Mol]):
 def get_descriptor_ls(mol_ls: List[rdkit.Chem.rdchem.Mol]):
     return get_descriptors_parallel(mol_ls)
 
+def get_pains_ls(mol_ls: list) -> List:
+    """Returns a boolean list indicating whether a compound contains PAINS structure"""
+    
+    # initialize filter
+    params = FilterCatalogParams()
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+    catalog = FilterCatalog(params)
+    
+    return [(catalog.GetFirstMatch(mol) is not None) for mol in mol_ls]
+
+def get_pains_idx(mol_ls: list) -> List[int]:
+    """Similar to above but return list of index"""
+    pains_idxs = []
+    
+    # initialize filter
+    params = FilterCatalogParams()
+    params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+    catalog = FilterCatalog(params)
+    
+    
+    for i, mol in zip(range(len(mol_ls)), mol_ls):
+        entry = catalog.GetFirstMatch(mol)  # Get the first matching PAINS
+        if entry is not None:
+            pains_idxs.append(i)
+    
+    return pains_idxs
 
 """Scaffolds"""
 from collections import defaultdict

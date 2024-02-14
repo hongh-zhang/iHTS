@@ -39,6 +39,13 @@ class Supervised_learner(Learner):
         self.p_explore = p_explore
         self.fp_ls = data["fp_ls"]
         self.X_master = np.concatenate([np.array(data.get("ds_ls")), np.array(self.fp_ls)], axis=1)
+
+        # prune instable features
+        instable_cols = [np.max(self.X_master[:,i])>(10**8) for i in range(self.X_master.shape[1])]
+        if np.any(instable_cols):
+            self.X_master = self.X_master[:, np.logical_not(instable_cols)]
+            print(f"Removed feature column: {np.where(instable_cols)[0]}")
+        
         self.X = None
         self.y = []
     
@@ -124,7 +131,13 @@ class Thompson_learner(Learner):
         return [self.idx_to_scf[idx].sample() for idx in idxs]
     
     def select(self, idxs: List[int], n: int) -> List[int]:
-        return self.rank(idxs)[:n]
+        #return self.rank(idxs)[:n]
+        selection = []
+        for _ in range(n):
+            idx = self.rank(idxs)[0]
+            selection.append(idx)
+            idxs.remove(idx)
+        return selection
     
 
 
